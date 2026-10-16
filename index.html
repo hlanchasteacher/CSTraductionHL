@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compiler vs Interpreter Interactive Diagram</title>
+    <title>Compiler vs Interpreter: Orbital Launch</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -14,6 +14,9 @@
             --success: #10b981;
             --error: #ef4444;
             --border: #334155;
+            --space: #020617;
+            --sky: #38bdf8;
+            --earth: #166534;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -155,7 +158,7 @@
         .animate-exe-build { animation: popIn 0.5s forwards; }
         .animate-exe-shoot { animation: shootExe 0.8s ease-in forwards; }
         
-        /* Right: Map */
+        /* Right: Launchpad (Vertical Track) */
         .map {
             background: #000;
             border-radius: 8px;
@@ -166,39 +169,47 @@
         }
         .battery-box { margin-bottom: 10px; }
         .battery-bar { height: 10px; background: #334155; border-radius: 5px; overflow: hidden; }
-        .battery-fill { height: 100%; width: 100%; background: var(--success); transition: width 0.2s, background 0.2s; }
-        .grid-path {
-            flex: 1;
-            display: grid;
-            grid-template-rows: repeat(10, 1fr);
-            gap: 2px;
-            position: relative;
-            background: #1e293b;
-            padding: 4px;
-            border-radius: 4px;
-        }
-        .grid-cell { background: #0f172a; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #64748b; }
-        .hazard-wall { border-right: 4px solid var(--error); background: rgba(239, 68, 68, 0.1); }
-        .hazard-ceil { border-top: 4px solid var(--accent); background: rgba(245, 158, 11, 0.1); }
-        .target { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); }
+        .battery-fill { height: 100%; width: 100%; background: var(--accent); transition: width 0.2s, background 0.2s; }
         
-        .rover {
-            position: absolute;
-            width: 80%;
-            height: calc(10% - 4px);
-            left: 10%;
-            top: 4px;
-            background: var(--primary);
+        .launch-track {
+            flex: 1;
+            display: flex;
+            flex-direction: column-reverse; /* Line 1 at bottom, Line 10 at top */
+            position: relative;
+            background: linear-gradient(to top, var(--earth) 0%, var(--sky) 30%, var(--space) 70%);
             border-radius: 4px;
-            transition: top 0.2s linear;
+            border: 1px solid #1e293b;
+            overflow: hidden;
+        }
+        .altitude-zone {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            border-top: 1px dashed rgba(255,255,255,0.1);
+        }
+        .zone-hazard { background: rgba(239, 68, 68, 0.15); font-weight: bold; color: rgba(255,255,255,0.8); }
+        .zone-target { background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: bold; }
+        
+        .rocket {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 0%;
+            transition: bottom 0.2s linear;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 0 10px var(--primary);
+            font-size: 28px;
             z-index: 5;
+            text-shadow: 0 5px 15px rgba(245, 158, 11, 0.8);
         }
-        .crash { animation: shake 0.4s; background: var(--error) !important; box-shadow: 0 0 15px var(--error) !important; }
+        .crash { animation: explode 0.5s forwards; }
         
         /* Controls & Logs */
         .controls {
@@ -234,17 +245,22 @@
         @keyframes shootRight { 0% { left: 50%; opacity: 1; } 100% { left: 120%; opacity: 0; } }
         @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         @keyframes shootExe { 0% { left: 50%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: 150%; opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes explode { 
+            0% { transform: translateX(-50%) scale(1); filter: hue-rotate(0deg); content: "💥"; } 
+            50% { transform: translateX(-50%) scale(1.5); filter: hue-rotate(90deg); content: "💥"; } 
+            100% { transform: translateX(-50%) scale(0); opacity: 0; content: "💥"; } 
+        }
 
         /* ManageBac submission area */
         .mb-submit { margin-top: 40px; width: 100%; max-width: 1200px; background: white; color: black; padding: 20px; border-radius: 8px; }
-        .mb-submit input, .mb-submit select { padding: 5px; margin: 5px 0; border: 1px solid #ccc; }
+        .mb-submit input, .mb-submit select { padding: 5px; margin: 5px 0; border: 1px solid #ccc; width: 100%; max-width: 400px; }
         @media print {
             body { background: white; color: black; padding: 0; }
             .widget-container { box-shadow: none; border: 1px solid #000; background: white; }
             .controls, .btn-print, .pipeline { display: none; }
             .timer-box, .editor, .map, .console { background: white; color: black; border: 1px solid #000; }
-            .grid-cell { background: #eee; }
+            .altitude-zone { border-top: 1px solid #ccc; color: #000; }
+            .launch-track { background: none; border: 1px solid #000; }
         }
     </style>
 </head>
@@ -252,8 +268,8 @@
 
 <div class="widget-container">
     <div class="header">
-        <h2 style="margin: 0 0 5px 0;">Translation Engine Debugger</h2>
-        <div style="color: #94a3b8; font-size: 14px;">Select the execution mode to trace the code-to-hardware pipeline.</div>
+        <h2 style="margin: 0 0 5px 0;">Translation Engine Debugger: Orbital Launch</h2>
+        <div style="color: #94a3b8; font-size: 14px;">Debug the launch sequence using Interpreted (live) vs Compiled (pre-built) execution.</div>
     </div>
 
     <div class="timers">
@@ -272,36 +288,36 @@
         <div class="editor">
             <div class="editor-container" id="editor-lines">
                 <div class="laser-scanner" id="laser"></div>
-                <div class="line"><span class="line-num">1</span>WALK_FORWARD</div>
+                <div class="line"><span class="line-num">1</span>SYSTEMS_CHECK</div>
                 <div class="line"><span class="line-num">2</span>
                     <select id="line2">
-                        <option value="WALK_FORWAARD">WALK_FORWAARD</option>
-                        <option value="WALK_FORWARD">WALK_FORWARD</option>
+                        <option value="ENGINNES_ON">ENGINNES_ON</option>
+                        <option value="ENGINES_ON">ENGINES_ON</option>
                     </select>
                 </div>
                 <div class="line"><span class="line-num">3</span>
                     <select id="line3">
-                        <option value="WALK_FAST">WALK_FAST</option>
-                        <option value="WALK_FORWARD">WALK_FORWARD</option>
+                        <option value="BURN_MAX">BURN_MAX</option>
+                        <option value="BURN_ECO">BURN_ECO</option>
                     </select>
                 </div>
-                <div class="line"><span class="line-num">4</span>WALK_FORWARD</div>
-                <div class="line"><span class="line-num">5</span>WALK_FORWARD</div>
+                <div class="line"><span class="line-num">4</span>CLEAR_TOWER</div>
+                <div class="line"><span class="line-num">5</span>GRAVITY_TURN</div>
                 <div class="line"><span class="line-num">6</span>
                     <select id="line6">
-                        <option value="TURN_LEFT">TURN_LEFT</option>
-                        <option value="TURN_RIGHT">TURN_RIGHT</option>
+                        <option value="OPEN_DOORS">OPEN_DOORS</option>
+                        <option value="SHIELDS_ON">SHIELDS_ON</option>
                     </select>
                 </div>
-                <div class="line"><span class="line-num">7</span>WALK_FORWARD</div>
-                <div class="line"><span class="line-num">8</span>WALK_FORWARD</div>
+                <div class="line"><span class="line-num">7</span>BOOSTER_SEP</div>
+                <div class="line"><span class="line-num">8</span>ENTER_VACUUM</div>
                 <div class="line"><span class="line-num">9</span>
                     <select id="line9">
-                        <option value="JUMP">JUMP</option>
-                        <option value="DUCK">DUCK</option>
+                        <option value="DEPLOY_CHUTE">DEPLOY_CHUTE</option>
+                        <option value="DEPLOY_SOLAR">DEPLOY_SOLAR</option>
                     </select>
                 </div>
-                <div class="line"><span class="line-num">10</span>WALK_FORWARD</div>
+                <div class="line"><span class="line-num">10</span>ORBIT_ACHIEVED</div>
             </div>
         </div>
 
@@ -312,15 +328,15 @@
             <div class="exe-block" id="exe">program.exe</div>
         </div>
 
-        <!-- 3. Rover Map -->
+        <!-- 3. Launchpad Map -->
         <div class="map">
             <div class="battery-box">
-                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Hardware Power</div>
+                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Rocket Fuel Level</div>
                 <div class="battery-bar"><div class="battery-fill" id="battery"></div></div>
             </div>
-            <div class="grid-path" id="grid">
-                <div class="rover" id="rover">🤖</div>
-                <!-- Cells generated via JS -->
+            <div class="launch-track" id="grid">
+                <div class="rocket" id="rocket">🚀</div>
+                <!-- Generated dynamically via JS -->
             </div>
         </div>
     </div>
@@ -330,32 +346,39 @@
     <div class="controls">
         <button class="btn-int" onclick="runInterpreter()">▶ Interpreter Mode</button>
         <button class="btn-comp" onclick="runCompiler()">⚙️ Compiler Mode</button>
-        <button class="btn-reset" onclick="resetState()">↺ Reset</button>
+        <button class="btn-reset" onclick="resetState()">↺ Reset Launch</button>
     </div>
 </div>
 
 <div class="mb-submit">
-    <h3>Student Assignment Submission</h3>
-    <label>Name: <input type="text" placeholder="Your Name"></label><br>
-    <label>Class: <input type="text" placeholder="Class"></label><br>
-    <p>1. Which mode caught the typo on line 2 before executing anything?</p>
+    <h3>Post-Mission Debrief (ManageBac Submission)</h3>
+    <label>Student Name: <input type="text" placeholder="Your Name"></label><br>
+    <label>Class/Group: <input type="text" placeholder="Class"></label><br>
+    <p>1. Which execution mode rejected the typo <code>ENGINNES_ON</code> before the rocket even burned any fuel?</p>
     <select><option></option><option>Compiler</option><option>Interpreter</option></select>
-    <p>2. Did either engine prevent the logic crash on line 6 automatically?</p>
-    <select><option></option><option>Yes</option><option>No, both execute valid logic faults</option></select>
-    <br><br>
-    <button onclick="window.print()" style="background: var(--primary);">Save PDF for ManageBac</button>
+    <p>2. Why did both translation engines allow <code>DEPLOY_CHUTE</code> to execute, even though it logically fails in the vacuum of space?</p>
+    <input type="text" placeholder="Briefly explain syntax vs semantic logic..."><br><br>
+    <button onclick="window.print()" style="background: var(--primary); padding: 10px; border:none; color:white; border-radius:5px; cursor:pointer;">Save PDF for ManageBac</button>
 </div>
 
 <script>
-    // Init Grid
+    // Init Grid (10 zones, flex-direction column-reverse means appending in order creates bottom-to-top layout)
     const grid = document.getElementById('grid');
+    const zoneLabels = [
+        "Ground", "Ignition", "Low Altitude", "Tower Clear", "Mid Altitude", 
+        "Max-Q (High Drag)", "Upper Atmos", "Vacuum Space", "Deep Space", "Orbit"
+    ];
+    
     for(let i=0; i<10; i++) {
-        let cell = document.createElement('div');
-        cell.className = 'grid-cell';
-        if(i===5) { cell.classList.add('hazard-wall'); cell.innerText = 'Wall'; }
-        if(i===8) { cell.classList.add('hazard-ceil'); cell.innerText = 'Overhang'; }
-        if(i===9) { cell.classList.add('target'); cell.innerText = 'GOAL'; }
-        grid.appendChild(cell);
+        let zone = document.createElement('div');
+        zone.className = 'altitude-zone';
+        zone.innerText = zoneLabels[i];
+        
+        if(i===5) { zone.classList.add('zone-hazard'); zone.innerText += " ⚠️"; } // High Drag
+        if(i===8) { zone.classList.add('zone-hazard'); zone.innerText += " ⚠️"; } // Vacuum
+        if(i===9) { zone.classList.add('zone-target'); } // Target
+        
+        grid.appendChild(zone);
     }
 
     const sysLog = document.getElementById('console');
@@ -376,10 +399,11 @@
 
     function resetState() {
         isRunning = false;
-        document.getElementById('rover').style.top = '4px';
-        document.getElementById('rover').classList.remove('crash');
+        document.getElementById('rocket').style.bottom = '0%';
+        document.getElementById('rocket').innerText = '🚀';
+        document.getElementById('rocket').classList.remove('crash');
         document.getElementById('battery').style.width = '100%';
-        document.getElementById('battery').style.background = 'var(--success)';
+        document.getElementById('battery').style.background = 'var(--accent)';
         document.getElementById('laser').style.display = 'none';
         document.getElementById('gear').classList.remove('spinning');
         document.getElementById('gear').innerText = '⚙️';
@@ -388,31 +412,34 @@
         document.getElementById('t-build').innerText = '0.00s';
         document.getElementById('t-run').innerText = '0.00s';
         sysLog.innerHTML = '';
-        log("System reset.");
+        log("Launchpad reset and fueled.");
     }
 
     function getProgram() {
         return [
-            "WALK_FORWARD", document.getElementById('line2').value, document.getElementById('line3').value,
-            "WALK_FORWARD", "WALK_FORWARD", document.getElementById('line6').value,
-            "WALK_FORWARD", "WALK_FORWARD", document.getElementById('line9').value, "WALK_FORWARD"
+            "SYSTEMS_CHECK", document.getElementById('line2').value, document.getElementById('line3').value,
+            "CLEAR_TOWER", "GRAVITY_TURN", document.getElementById('line6').value,
+            "BOOSTER_SEP", "ENTER_VACUUM", document.getElementById('line9').value, "ORBIT_ACHIEVED"
         ];
     }
 
     async function checkHazards(line, idx, battery) {
         if(battery <= 0) {
-            document.getElementById('rover').classList.add('crash');
-            log(`SEMANTIC ERROR Line ${idx+1}: Hardware depleted.`, "error");
+            document.getElementById('rocket').innerText = '💥';
+            document.getElementById('rocket').classList.add('crash');
+            log(`SEMANTIC ERROR Line ${idx+1}: Rocket depleted fuel and fell!`, "error");
             return false;
         }
-        if(idx === 5 && line === "TURN_LEFT") {
-            document.getElementById('rover').classList.add('crash');
-            log(`LOGIC ERROR Line ${idx+1}: Hardware collided with wall.`, "error");
+        if(idx === 5 && line === "OPEN_DOORS") {
+            document.getElementById('rocket').innerText = '💥';
+            document.getElementById('rocket').classList.add('crash');
+            log(`LOGIC ERROR Line ${idx+1}: Opened doors at Max-Q! Aerodynamic destruction!`, "error");
             return false;
         }
-        if(idx === 8 && line === "JUMP") {
-            document.getElementById('rover').classList.add('crash');
-            log(`SEMANTIC ERROR Line ${idx+1}: Hardware collided with overhang.`, "error");
+        if(idx === 8 && line === "DEPLOY_CHUTE") {
+            document.getElementById('rocket').innerText = '💥';
+            document.getElementById('rocket').classList.add('crash');
+            log(`SEMANTIC ERROR Line ${idx+1}: Parachutes require air! Useless in a vacuum!`, "error");
             return false;
         }
         return true;
@@ -422,7 +449,7 @@
         if(isRunning) return;
         resetState();
         isRunning = true;
-        log("INIT: Interpreter Mode", "warn");
+        log("INIT: Interpreter Mode (Translating live during flight)", "warn");
         const code = getProgram();
         const laser = document.getElementById('laser');
         laser.style.display = 'block';
@@ -440,14 +467,14 @@
             
             // 2. Spin Gear (Translation Cost)
             document.getElementById('gear').classList.add('spinning');
-            await sleep(500);
+            await sleep(500); // Wait for interpreter to translate
             runTime += 0.50; document.getElementById('t-run').innerText = runTime.toFixed(2) + 's';
             
             // Syntax Check
-            if(code[i] === "WALK_FORWAARD") {
+            if(code[i] === "ENGINNES_ON") {
                 document.getElementById('gear').classList.remove('spinning');
                 document.getElementById('gear').innerText = '❌';
-                log(`SYNTAX ERROR Line ${i+1}: Unrecognized token '${code[i]}'`, "error");
+                log(`SYNTAX ERROR Line ${i+1}: Unrecognized command '${code[i]}'`, "error");
                 isRunning = false; return;
             }
 
@@ -460,18 +487,18 @@
             packet.classList.add('animate-packet');
             
             // 4. Execute on Hardware
-            if(code[i] === "WALK_FAST") battery -= 80; else battery -= 10;
+            if(code[i] === "BURN_MAX") battery -= 80; else battery -= 10;
             document.getElementById('battery').style.width = `${Math.max(0, battery)}%`;
             if(battery <= 20) document.getElementById('battery').style.background = 'var(--error)';
             
             if(!(await checkHazards(code[i], i, battery))) { isRunning = false; return; }
 
-            // Move Rover
-            document.getElementById('rover').style.top = `calc(${i * 10}% + 4px)`;
-            await sleep(200);
+            // Move Rocket Upwards
+            document.getElementById('rocket').style.bottom = `${i * 10}%`;
+            await sleep(200); // Hardware move time
             runTime += 0.20; document.getElementById('t-run').innerText = runTime.toFixed(2) + 's';
         }
-        log("SUCCESS: Program complete.", "success");
+        log("SUCCESS: Orbit Achieved.", "success");
         isRunning = false;
     }
 
@@ -479,7 +506,7 @@
         if(isRunning) return;
         resetState();
         isRunning = true;
-        log("INIT: Compiler Mode", "warn");
+        log("INIT: Compiler Mode (Pre-flight Build)", "warn");
         const code = getProgram();
         const laser = document.getElementById('laser');
         laser.style.display = 'block';
@@ -491,15 +518,15 @@
             await sleep(100);
             buildTime += 0.10; document.getElementById('t-build').innerText = buildTime.toFixed(2) + 's';
             
-            if(code[i] === "WALK_FORWAARD") {
+            if(code[i] === "ENGINNES_ON") {
                 document.getElementById('gear').classList.remove('spinning');
                 document.getElementById('gear').innerText = '❌';
-                log(`BUILD FATAL: Syntax Error Line ${i+1}. Compilation aborted.`, "error");
+                log(`BUILD FATAL: Syntax Error Line ${i+1}. Launch scrubbed.`, "error");
                 isRunning = false; return;
             }
         }
         
-        // Simulate deeper compilation time
+        // Simulate compilation finalizing
         for(let j=0; j<20; j++) {
             await sleep(100);
             buildTime += 0.10; document.getElementById('t-build').innerText = buildTime.toFixed(2) + 's';
@@ -509,38 +536,38 @@
         laser.style.display = 'none';
         
         // Show EXE
-        log("Build successful. Generating executable...", "success");
+        log("Build successful. Generating executable payload...", "success");
         let exe = document.getElementById('exe');
         exe.classList.add('animate-exe-build');
         await sleep(1000);
         
-        log("Transferring executable to hardware...", "info");
+        log("Uploading native binary to rocket flight computer...", "info");
         exe.classList.remove('animate-exe-build');
         void exe.offsetWidth;
         exe.classList.add('animate-exe-shoot');
         await sleep(800);
         
-        // 2. Runtime Phase (Blazing Fast)
-        log("Executing native binary...", "success");
+        // 2. Runtime Phase (Fast, no translation delays mid-flight)
+        log("Liftoff! Executing native binary...", "success");
         runTime = 0; document.getElementById('t-run').innerText = '0.00s';
         let battery = 100;
         
         for(let i=0; i<10; i++) {
             if(!isRunning) break;
             
-            if(code[i] === "WALK_FAST") battery -= 80; else battery -= 10;
+            if(code[i] === "BURN_MAX") battery -= 80; else battery -= 10;
             document.getElementById('battery').style.width = `${Math.max(0, battery)}%`;
             if(battery <= 20) document.getElementById('battery').style.background = 'var(--error)';
             
             if(!(await checkHazards(code[i], i, battery))) { isRunning = false; return; }
 
-            // Move Rover Fast
-            document.getElementById('rover').style.top = `calc(${i * 10}% + 4px)`;
-            await sleep(150);
+            // Move Rocket Fast
+            document.getElementById('rocket').style.bottom = `${i * 10}%`;
+            await sleep(150); // Faster execution
             runTime += 0.15; document.getElementById('t-run').innerText = runTime.toFixed(2) + 's';
         }
         
-        log("SUCCESS: Program complete.", "success");
+        log("SUCCESS: Orbit Achieved.", "success");
         isRunning = false;
     }
 </script>
