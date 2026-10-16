@@ -158,7 +158,7 @@
         .animate-exe-build { animation: popIn 0.5s forwards; }
         .animate-exe-shoot { animation: shootExe 0.8s ease-in forwards; }
         
-        /* Right: Launchpad (Vertical Track) */
+        /* Right: Launchpad */
         .map {
             background: #000;
             border-radius: 8px;
@@ -174,7 +174,7 @@
         .launch-track {
             flex: 1;
             display: flex;
-            flex-direction: column-reverse; /* Line 1 at bottom, Line 10 at top */
+            flex-direction: column-reverse;
             position: relative;
             background: linear-gradient(to top, var(--earth) 0%, var(--sky) 30%, var(--space) 70%);
             border-radius: 4px;
@@ -336,7 +336,6 @@
             </div>
             <div class="launch-track" id="grid">
                 <div class="rocket" id="rocket">🚀</div>
-                <!-- Generated dynamically via JS -->
             </div>
         </div>
     </div>
@@ -362,7 +361,6 @@
 </div>
 
 <script>
-    // Init Grid (10 zones, flex-direction column-reverse means appending in order creates bottom-to-top layout)
     const grid = document.getElementById('grid');
     const zoneLabels = [
         "Ground", "Ignition", "Low Altitude", "Tower Clear", "Mid Altitude", 
@@ -374,9 +372,9 @@
         zone.className = 'altitude-zone';
         zone.innerText = zoneLabels[i];
         
-        if(i===5) { zone.classList.add('zone-hazard'); zone.innerText += " ⚠️"; } // High Drag
-        if(i===8) { zone.classList.add('zone-hazard'); zone.innerText += " ⚠️"; } // Vacuum
-        if(i===9) { zone.classList.add('zone-target'); } // Target
+        if(i===5) { zone.classList.add('zone-hazard'); zone.innerText += " ⚠️"; }
+        if(i===8) { zone.classList.add('zone-hazard'); zone.innerText += " ⚠️"; }
+        if(i===9) { zone.classList.add('zone-target'); }
         
         grid.appendChild(zone);
     }
@@ -449,28 +447,25 @@
         if(isRunning) return;
         resetState();
         isRunning = true;
-        log("INIT: Interpreter Mode (Translating live during flight)", "warn");
+        log("INIT: Interpreter Mode", "warn");
         const code = getProgram();
         const laser = document.getElementById('laser');
         laser.style.display = 'block';
         
-        let battery = 100;
+        let battery = 110; /* INCREASED STARTING FUEL TO FIX LINE 10 CRASH */
         buildTime = 0; document.getElementById('t-build').innerText = '0.00s';
         runTime = 0;
         
         for(let i=0; i<10; i++) {
             if(!isRunning) break;
             
-            // 1. Move Laser
             laser.style.top = `${i * 24}px`;
             log(`Translating Line ${i+1}...`);
             
-            // 2. Spin Gear (Translation Cost)
             document.getElementById('gear').classList.add('spinning');
-            await sleep(500); // Wait for interpreter to translate
+            await sleep(500); 
             runTime += 0.50; document.getElementById('t-run').innerText = runTime.toFixed(2) + 's';
             
-            // Syntax Check
             if(code[i] === "ENGINNES_ON") {
                 document.getElementById('gear').classList.remove('spinning');
                 document.getElementById('gear').innerText = '❌';
@@ -478,7 +473,6 @@
                 isRunning = false; return;
             }
 
-            // 3. Shoot Binary Packet
             document.getElementById('gear').classList.remove('spinning');
             let packet = document.getElementById('packet');
             packet.innerText = `[${Math.random().toString(2).substr(2,6)}]`;
@@ -486,16 +480,18 @@
             void packet.offsetWidth;
             packet.classList.add('animate-packet');
             
-            // 4. Execute on Hardware
-            if(code[i] === "BURN_MAX") battery -= 80; else battery -= 10;
-            document.getElementById('battery').style.width = `${Math.max(0, battery)}%`;
-            if(battery <= 20) document.getElementById('battery').style.background = 'var(--error)';
+            // Fixed fuel logic: Burn Max is heavily penalized, Eco is safe.
+            if(code[i] === "BURN_MAX") battery -= 70; else battery -= 10;
+            
+            // Calculate visual percentage (max 110)
+            let batteryPercent = (Math.max(0, battery) / 110) * 100;
+            document.getElementById('battery').style.width = `${batteryPercent}%`;
+            if(batteryPercent <= 20) document.getElementById('battery').style.background = 'var(--error)';
             
             if(!(await checkHazards(code[i], i, battery))) { isRunning = false; return; }
 
-            // Move Rocket Upwards
             document.getElementById('rocket').style.bottom = `${i * 10}%`;
-            await sleep(200); // Hardware move time
+            await sleep(200); 
             runTime += 0.20; document.getElementById('t-run').innerText = runTime.toFixed(2) + 's';
         }
         log("SUCCESS: Orbit Achieved.", "success");
@@ -506,12 +502,11 @@
         if(isRunning) return;
         resetState();
         isRunning = true;
-        log("INIT: Compiler Mode (Pre-flight Build)", "warn");
+        log("INIT: Compiler Mode", "warn");
         const code = getProgram();
         const laser = document.getElementById('laser');
         laser.style.display = 'block';
         
-        // 1. Build Phase
         document.getElementById('gear').classList.add('spinning');
         for(let i=0; i<10; i++) {
             laser.style.top = `${i * 24}px`;
@@ -526,7 +521,6 @@
             }
         }
         
-        // Simulate compilation finalizing
         for(let j=0; j<20; j++) {
             await sleep(100);
             buildTime += 0.10; document.getElementById('t-build').innerText = buildTime.toFixed(2) + 's';
@@ -535,7 +529,6 @@
         document.getElementById('gear').classList.remove('spinning');
         laser.style.display = 'none';
         
-        // Show EXE
         log("Build successful. Generating executable payload...", "success");
         let exe = document.getElementById('exe');
         exe.classList.add('animate-exe-build');
@@ -547,23 +540,24 @@
         exe.classList.add('animate-exe-shoot');
         await sleep(800);
         
-        // 2. Runtime Phase (Fast, no translation delays mid-flight)
         log("Liftoff! Executing native binary...", "success");
         runTime = 0; document.getElementById('t-run').innerText = '0.00s';
-        let battery = 100;
+        
+        let battery = 110; /* INCREASED STARTING FUEL TO FIX LINE 10 CRASH */
         
         for(let i=0; i<10; i++) {
             if(!isRunning) break;
             
-            if(code[i] === "BURN_MAX") battery -= 80; else battery -= 10;
-            document.getElementById('battery').style.width = `${Math.max(0, battery)}%`;
-            if(battery <= 20) document.getElementById('battery').style.background = 'var(--error)';
+            if(code[i] === "BURN_MAX") battery -= 70; else battery -= 10;
+            
+            let batteryPercent = (Math.max(0, battery) / 110) * 100;
+            document.getElementById('battery').style.width = `${batteryPercent}%`;
+            if(batteryPercent <= 20) document.getElementById('battery').style.background = 'var(--error)';
             
             if(!(await checkHazards(code[i], i, battery))) { isRunning = false; return; }
 
-            // Move Rocket Fast
             document.getElementById('rocket').style.bottom = `${i * 10}%`;
-            await sleep(150); // Faster execution
+            await sleep(150); 
             runTime += 0.15; document.getElementById('t-run').innerText = runTime.toFixed(2) + 's';
         }
         
