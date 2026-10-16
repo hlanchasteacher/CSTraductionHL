@@ -44,6 +44,21 @@
             padding-bottom: 15px;
             border-bottom: 1px solid var(--border);
         }
+        
+        /* Instructions Panel */
+        .instructions {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        .instructions h3 { margin-top: 0; color: var(--sky); margin-bottom: 10px; }
+        .instructions p { margin: 0 0 10px 0; line-height: 1.5; }
+        .instructions ul { margin: 0; padding-left: 20px; color: #cbd5e1; }
+        .instructions li { margin-bottom: 6px; }
+
         .timers {
             display: flex;
             justify-content: center;
@@ -257,7 +272,7 @@
         @media print {
             body { background: white; color: black; padding: 0; }
             .widget-container { box-shadow: none; border: 1px solid #000; background: white; }
-            .controls, .btn-print, .pipeline { display: none; }
+            .controls, .btn-print, .pipeline, .instructions { display: none; }
             .timer-box, .editor, .map, .console { background: white; color: black; border: 1px solid #000; }
             .altitude-zone { border-top: 1px solid #ccc; color: #000; }
             .launch-track { background: none; border: 1px solid #000; }
@@ -270,6 +285,19 @@
     <div class="header">
         <h2 style="margin: 0 0 5px 0;">Translation Engine Debugger: Orbital Launch</h2>
         <div style="color: #94a3b8; font-size: 14px;">Debug the launch sequence using Interpreted (live) vs Compiled (pre-built) execution.</div>
+    </div>
+
+    <!-- Instructions Panel -->
+    <div class="instructions">
+        <h3>Mission Briefing</h3>
+        <p>Your goal is to successfully launch the rocket to orbit (Line 10). The flight software contains <strong>4 critical bugs</strong>. Debug the program using the dropdown menus.</p>
+        <ul>
+            <li><strong>Syntax Error:</strong> A typo the computer cannot parse.</li>
+            <li><strong>Resource Semantic Error:</strong> Valid code that drains all fuel before orbit.</li>
+            <li><strong>Logic Error:</strong> A bad decision that destroys the ship aerodynamically.</li>
+            <li><strong>Context Semantic Error:</strong> A command that works on Earth but fails in the vacuum of space.</li>
+        </ul>
+        <p style="margin-bottom: 0;"><em>Compare how the Interpreter (translating live mid-flight) and the Compiler (pre-building the whole program upfront) handle these errors differently. <strong>Note: Switching engines will reset the bugs.</strong></em></p>
     </div>
 
     <div class="timers">
@@ -345,7 +373,7 @@
     <div class="controls">
         <button class="btn-int" onclick="runInterpreter()">▶ Interpreter Mode</button>
         <button class="btn-comp" onclick="runCompiler()">⚙️ Compiler Mode</button>
-        <button class="btn-reset" onclick="resetState()">↺ Reset Launch</button>
+        <button class="btn-reset" onclick="manualReset()">↺ Reset All</button>
     </div>
 </div>
 
@@ -394,6 +422,15 @@
     let isRunning = false;
     let buildTime = 0;
     let runTime = 0;
+    let currentMode = null; // Tracks which engine was last used to enforce resets
+
+    function resetCodeBugs() {
+        document.getElementById('line2').value = 'ENGINNES_ON';
+        document.getElementById('line3').value = 'BURN_MAX';
+        document.getElementById('line6').value = 'OPEN_DOORS';
+        document.getElementById('line9').value = 'DEPLOY_CHUTE';
+        log("Code editors reset to original buggy state.", "warn");
+    }
 
     function resetState() {
         isRunning = false;
@@ -411,6 +448,12 @@
         document.getElementById('t-run').innerText = '0.00s';
         sysLog.innerHTML = '';
         log("Launchpad reset and fueled.");
+    }
+
+    function manualReset() {
+        resetCodeBugs();
+        resetState();
+        currentMode = null;
     }
 
     function getProgram() {
@@ -445,6 +488,13 @@
 
     async function runInterpreter() {
         if(isRunning) return;
+        
+        // Force bug reset if switching engines
+        if (currentMode !== 'interpreter') {
+            resetCodeBugs();
+            currentMode = 'interpreter';
+        }
+        
         resetState();
         isRunning = true;
         log("INIT: Interpreter Mode", "warn");
@@ -452,7 +502,7 @@
         const laser = document.getElementById('laser');
         laser.style.display = 'block';
         
-        let battery = 110; /* INCREASED STARTING FUEL TO FIX LINE 10 CRASH */
+        let battery = 110; 
         buildTime = 0; document.getElementById('t-build').innerText = '0.00s';
         runTime = 0;
         
@@ -480,10 +530,8 @@
             void packet.offsetWidth;
             packet.classList.add('animate-packet');
             
-            // Fixed fuel logic: Burn Max is heavily penalized, Eco is safe.
             if(code[i] === "BURN_MAX") battery -= 70; else battery -= 10;
             
-            // Calculate visual percentage (max 110)
             let batteryPercent = (Math.max(0, battery) / 110) * 100;
             document.getElementById('battery').style.width = `${batteryPercent}%`;
             if(batteryPercent <= 20) document.getElementById('battery').style.background = 'var(--error)';
@@ -500,6 +548,13 @@
 
     async function runCompiler() {
         if(isRunning) return;
+        
+        // Force bug reset if switching engines
+        if (currentMode !== 'compiler') {
+            resetCodeBugs();
+            currentMode = 'compiler';
+        }
+
         resetState();
         isRunning = true;
         log("INIT: Compiler Mode", "warn");
@@ -543,7 +598,7 @@
         log("Liftoff! Executing native binary...", "success");
         runTime = 0; document.getElementById('t-run').innerText = '0.00s';
         
-        let battery = 110; /* INCREASED STARTING FUEL TO FIX LINE 10 CRASH */
+        let battery = 110; 
         
         for(let i=0; i<10; i++) {
             if(!isRunning) break;
